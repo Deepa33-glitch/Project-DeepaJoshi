@@ -1,0 +1,8 @@
+Task 1 online compiler link
+
+https://onecompiler.com/sqlserver/446jn6kgs
+
+One more link using my sql for query Task 1 analytics (a
+Reason- As on MySQL server the output is have big space between two columns
+
+https://onecompiler.com/mysql/446jps6zk
