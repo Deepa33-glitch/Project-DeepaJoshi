@@ -1,0 +1,113 @@
+
+-- Create a table employees with columns
+CREATE TABLE employees (
+  EMPLOYEE_ID INTEGER PRIMARY KEY,
+  NAME TEXT NOT NULL,
+  DEPARTMENT TEXT NOT NULL,
+  EMAIL TEXT NOT NULL,
+  PHONE_NO NUMERIC NOT NULL,
+  JOINING_DATE DATE NOT NULL,
+  SALARY NUMERIC (10,2) NOT NULL,
+  BONUS NUMERIC (10,2),
+  TAX_PERCENTAGE NUMERIC (5,4)
+);
+
+-- insert
+INSERT INTO employees
+VALUES (0001, 'Clark', 'Sales','clark654@gmail.com',0001283748,'2005-06-04',90000.00,50000.00,0.05),
+(0002, 'Dave', 'Accounting','dave233@yahoo.mail',9994536278,'2012-02-08',40000.00,18000.00,0.001),
+(0003, 'Ava', 'Sales','ava43@gmail.com',8833452789,'2024-05-24',18000.00,10000.00,0.00),
+(0004, 'Nadia', 'Accounting', 'nadia010@yahoo.mail', 7264447822,'2025-07-01', 15000.00,10000.00, 0.00),
+(0005, 'Rocky', 'Marketing', 'rocky533@gmail.com', 0088662244, '2009-04-28', 90000.00, 45000.00,0.05),
+(0006, 'Sharad', 'Software Developer', 'sharad1004@gmail.com', 7728172908, '2010-06-01', 180000.00, 0.00,0.07),
+(0007, 'Nandani', 'Sr. Software Engineer', 'nand5600@gmail.com', 9945281790, '2005-02-24', 300000.00, 0.00,0.09),
+(0008, 'Richard', 'Branding', 'rich3344@gmail.com', 9945265170, '2023-02-22', 32000.00, 20000.00,0.00),
+(0009, 'Monica', 'Marketing', 'mon100$@gmail.com', 9945008172, '2022-04-03', 34000.00, 20000.00,0.00),
+(0010, 'Josh', 'Sales', 'josh900$@gmail.com', 9945990012, '2023-04-03', 29000.00, 18000.00,0.00),
+(0011, 'Jean', 'Sales', 'jean7011$@gmail.com', 9945665522, '2025-07-23', 15000.00, 10000.00,0.00);
+
+
+
+--a) Retrieve the list of employees sorted by salary in descending order
+
+SELECT NAME FROM employees
+ORDER BY SALARY DESC;
+
+
+--b) Find employees with a total compensation (SALARY + BONUS) greater than
+--$100,000.
+SELECT NAME, (SALARY + BONUS) AS Total_Compensation FROM employees
+WHERE SALARY + BONUS > 100000.00;
+
+
+--c) Update the bonus for employees in the ‘Sales’ department by 10%.
+UPDATE employees
+SET bonus = bonus * 1.1 WHERE department = 'Sales';
+SELECT bonus AS After_Update FROM employees;
+
+
+--d) Calculate the net salary after deducting tax for all employees.
+SELECT
+    EMPLOYEE_ID,
+    NAME,
+    SALARY,
+    (SALARY * TAX_PERCENTAGE) AS Tax_Deduction,
+    (SALARY - (SALARY * TAX_PERCENTAGE)) AS Net_Salary_AfterDeduction
+FROM
+    employees
+ORDER BY EMPLOYEE_ID;
+
+
+
+--e) Retrieve the average, minimum, and maximum salary per department.
+SELECT
+    DEPARTMENT,
+    AVG(SALARY) AS Avg_salary,
+    MIN(SALARY) AS Min_salary,
+    MAX(SALARY) AS Max_salary
+FROM
+    employees
+GROUP BY
+    DEPARTMENT
+ORDER BY
+    DEPARTMENT;
+   
+   
+--Advanced Queries:    
+--a) Retrieve employees who joined in the last 6 months
+SELECT *
+FROM employees
+WHERE 
+JOINING_DATE >= NOW() - INTERVAL '6 months';
+
+
+
+--b) Group employees by department and count how many employees each has.
+SELECT
+    DEPARTMENT,
+    COUNT(EMPLOYEE_ID) AS Employee_Count
+FROM
+    employees
+GROUP BY
+    DEPARTMENT
+ORDER BY
+    DEPARTMENT;
+
+
+--c) Find the department with the highest average salary.
+SELECT DEPARTMENT, AVG(SALARY) AS average_salary
+FROM employees
+GROUP BY DEPARTMENT
+ORDER BY average_salary DESC
+LIMIT 1;
+
+
+--d) Identify employees who have the same salary as at least one other employee.
+SELECT EMPLOYEE_ID, NAME, SALARY
+FROM employees
+WHERE SALARY IN (
+    SELECT SALARY
+    FROM employees
+    GROUP BY SALARY
+    HAVING COUNT(*) > 1
+) ORDER BY SALARY ;

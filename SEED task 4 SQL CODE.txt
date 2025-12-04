@@ -1,0 +1,135 @@
+
+-- create
+CREATE TABLE rental_data (
+  movie_id INTEGER,
+  customer_id INTEGER,
+  genre VARCHAR(10),
+  rental_date DATE,
+  return_date DATE,
+  rental_fee NUMERIC
+);
+
+-- insert
+INSERT INTO rental_data VALUES 
+(0001, 911, 'Horror', '2025-07-02', '2025-07-21', 210),
+(0002, 912, 'Thriller', '2025-07-03', '2025-08-03', 230),
+(0003, 913, 'Romance', '2025-08-28', '2025-09-04', 350),
+(0004, 914, 'Action', '2025-08-28', '2025-09-04', 280),
+(0005, 915, 'Action', '2025-11-30', null, 380),
+(0006, 916, 'Drama', '2025-10-03', '2025-11-22', 200),
+(0007, 917, 'Biography', '2025-10-04', null, 180),
+(0007, 917, 'Adventure', '2025-04-04', '2025-04-30', 320),
+(0008, 918, 'Romance', '2025-03-02', '2025-04-03', 220),
+(0009, 919, 'Drama', '2025-06-07', '2025-07-09', 420),
+(0010, 920, 'Comedy', '2025-11-30', null, 420);
+
+
+--a) Drill Down: Analyze rentals from genre to individual movie level with grand total.
+
+--with cte as ( SELECT
+  --  COALESCE(genre, 'Grand Total') as genres,
+    --COALESCE(movie_id,0) as Movie,
+    --SUM(rental_fee) AS total_rental_fee 
+--FROM
+    --rental_data
+    
+--GROUP BY
+  --  rollup(genre,movie_id)
+--ORDER BY
+--    movie_id nulls last,genre NULLS LAST)
+  --  select genres,Movie,total_rental_fee from cte
+--    where (Movie<>0 or genres='Grand Total');
+    
+SELECT
+    GENRE,
+    MOVIE_ID,
+    COUNT(MOVIE_ID) AS total_rentals_by_movie,
+    SUM(RENTAL_FEE) AS total_revenue_by_movie,
+    AVG(RENTAL_FEE) AS average_rental_fee_by_movie
+FROM
+    rental_data
+GROUP BY
+    GENRE, MOVIE_ID
+ORDER BY
+    GENRE, total_rentals_by_movie DESC;
+
+
+
+
+    
+--b) Rollup: Summarize total rental fees by genre and then overall
+
+SELECT
+    COALESCE(genre, 'Grand Total'),
+    SUM(rental_fee) AS total_rental_fee
+FROM
+    rental_data
+GROUP BY
+    ROLLUP(genre)
+ORDER BY
+    genre NULLS LAST;
+
+
+
+
+
+
+
+
+--c) Cube: Analyze total rental fees across combinations of genre, rental date, and
+--customer.
+--with cte as (SELECT
+ --  genre ,customer_id,rental_date,
+ --   SUM(rental_fee) AS total_rental_fee
+--FROM
+ --   rental_data
+--GROUP BY
+  --  cube(genre,customer_id,rental_date)
+--ORDER BY genre NULLS LAST)
+--select genre,customer_id,rental_date,total_rental_fee from cte
+--where customer_id is not null and rental_date is not null
+--and genre is not null; 
+
+SELECT
+    genre,
+    rental_date,
+    customer_id,
+    SUM(rental_fee) AS total_rental_fees
+FROM
+    rental_data
+GROUP BY CUBE (genre, rental_date, customer_id)
+ORDER BY
+    genre NULLS FIRST,
+    rental_date NULLS FIRST,
+    customer_id NULLS FIRST;
+
+  
+
+
+
+--d) Slice: Extract rentals only from the ‘Action’ genre.
+
+SELECT * FROM
+rental_data
+WHERE genre = 'Action';
+    
+    
+    
+
+
+--e) Dice: Extract rentals where GENRE = 'Action' or 'Drama' and RENTAL_DATE is in
+--the last 3 months
+
+SELECT
+    *
+FROM
+    rental_data
+WHERE
+    (genre = 'Action' OR genre = 'Drama')
+    AND rental_date >= (CURRENT_DATE - INTERVAL '3 months');
+    
+
+
+
+
+

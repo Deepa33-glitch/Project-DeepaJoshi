@@ -1,0 +1,147 @@
+--Task 1
+--Library management system
+
+--Database Creation
+
+CREATE TABLE Books (
+  book_id INT PRIMARY KEY,
+  title VARCHAR(20),
+  author VARCHAR(20),
+  genre VARCHAR(20),
+  year_published DATE,
+  available_copies INT
+);
+
+CREATE TABLE Member (
+  member_id INT PRIMARY KEY,
+  name VARCHAR(20),
+  email_id VARCHAR(20),
+  phone_no VARCHAR(20),
+  address TEXT,
+  membership_date DATE
+);
+
+CREATE TABLE BorrowingRecords (
+  borrow_id INT,
+  member_id INT FOREIGN KEY REFERENCES Member(member_id),
+  book_id INT FOREIGN KEY REFERENCES Books(book_id),
+  borrow_date DATE,
+  return_date DATE
+);
+
+--DATA Creation-Inserting data
+
+INSERT INTO Books (book_id, title, author, genre, year_published, available_copies)
+VALUES (121, "Lost In Woods", "Arnav Singh", "Horror", "2008-11-11", 7),
+       (122, "Heavens", "Ciara Clark", "Romance", "2012-09-10", 29),
+       (123, "Rush Hour", "Sandra Blake", "Thriller", "2002-01-22", 3),
+       (124, "Nature Language", "Dhawan Rawat", "Ecology", "2024-12-01", 50),
+       (125, "Deep In The Ocean", "Ron Dan", "Marine Biology", "2023-03-16", 33);
+  
+INSERT INTO Member (member_id, name, email_id, phone_no, address, membership_date)
+VALUES (21, "Naman Devi", "naman123@gmail.com", "6274829637", "Silan Road 234", "2014-01-31"),
+       (22, "Resha Saikia", "reshakia@gamail.com", "4253674890", "Bilak Colony 567", "2022-07-02"),
+       (23, "Haman Dev", "hamand45@yahoo.mail", "2435748901", "Radha Society 111", "2019-08-18"),
+       (24, "Kalesh Daki", "daki.lesh@yahoo.mail", "4320910089", "Baniya Road 001", "2019-04-03"),
+       (25, "Zyan Bert", "zyan090@yahoo.mail", "9991243678", "Trip Colony 765", "2019-03-01"),
+       (26, "Anand Bedi", "anand888@gmail.com", "0118299933", "Harman Colony 567", "2020-02-27");
+
+INSERT INTO BorrowingRecords (borrow_id, member_id, book_id, borrow_date, return_date)
+VALUES (1, 21, 121, "2025-02-21", "2025-03-19"),
+(2, 22, 122, "2025-01-03", "2025-02-01"),
+(3, 23, 123, "2025-03-06", "2025-03-30"),
+ (4, 24, 124, "2025-05-11", "2025-06-01"),
+(5, 25, 125, "2025-09-01", "2025-09-28"),
+(6, 21, 124, "2025-03-19", "2025-03-31"),
+(7, 23, 122, "2025-04-01", "2025-04-14"),
+(8, 25, 122, "2025-03-31", "2025-04-12"),
+(9, 22, 121, "2025-05-23", "2025-07-02"),
+(10, 21, 123, "2025-08-11", "2025-09-02"),
+(11, 21, 122, "2025-09-28", null),
+(12, 24, 121, "2025-10-20", null),
+(13, 21, 125, "2025-12-01", null),
+(14, 21, 122, "2025-02-03", "2025-03-04"),
+(15, 22, 122, "2025-02-15", "2025-03-16"),
+(16, 24, 122, "2025-03-04", "2025-03-16"),
+(17, 23, 122, "2025-12-01", null),
+(18, 25, 122, "2025-10-02", null),
+(19, 24, 122, "2025-03-28", "2025-05-22"),
+(20, 23, 122, "2025-10-10", "2025-12-01");
+
+
+--Information Retrieval
+--a) Retrieve a list of books currently borrowed by a specific member.
+
+select b.title AS Books_currently_Borrowed
+from BorrowingRecords a inner join Member m on (m.member_id=a.member_id)
+inner join Books b on(a.book_id=b.book_id)
+where a.return_date is null
+and m.name='Naman Devi';
+
+--b) Find members who have overdue books (borrowed more than 30 days ago, not
+--returned).
+SELECT m.name AS Overdue_books
+FROM Member m
+JOIN BorrowingRecords b ON (m.member_id=b.member_id)
+WHERE b.return_date is null
+AND b.borrow_date < DATEADD(day, -30, GETDATE());
+
+--c) Retrieve books by genre along with the count of available copies
+
+
+--d) Find the most borrowed book(s) overall.
+--with cte as (select book_id AS BookId,count(*) cnt from BorrowingRecords
+--group by book_id)
+--select * from cte 
+--where cnt=(
+--select max(cnt) from cte );
+
+SELECT TOP 2 bk.title AS BookName, COUNT(*) AS Borrow_Count
+FROM BorrowingRecords b
+JOIN Books bk ON bk.book_id = b.book_id
+GROUP BY title
+ORDER BY Borrow_Count DESC;
+
+--e) Retrieve members who have borrowed books from at least three different genres.
+select m.name AS Member_with_3_different_genre
+from BorrowingRecords a inner join Member m on (m.member_id=a.member_id)
+inner join Books b on(a.book_id=b.book_id)
+group by m.name
+having count(distinct genre)>2;
+
+--Reporting and Analytics:
+--a) Calculate the total number of books borrowed per month.
+SELECT
+    FORMAT(borrow_date, 'yyyy-MM') AS BorrowMonth,
+    COUNT(book_id) AS TotalBooksBorrowed
+FROM
+    BorrowingRecords
+GROUP BY
+    FORMAT(borrow_date, 'yyyy-MM')
+ORDER BY
+    BorrowMonth;
+    
+--b) Find the top three most active members based on the number of books
+--borrowed.
+SELECT TOP 3
+    m.name,
+    COUNT(b.book_id) AS books_borrowed_count
+FROM
+    Member AS m
+JOIN
+    BorrowingRecords AS b ON m.member_id = b.member_id
+GROUP BY
+    m.member_id, m.name
+ORDER BY
+    books_borrowed_count DESC;
+
+--c) Retrieve authors whose books have been borrowed at least 10 times.
+SELECT bk.author AS AuthorName, COUNT(b.book_id) AS books_borrowed_count FROM Books bk
+JOIN BorrowingRecords b ON bk.book_id = b.book_id
+GROUP BY bk.author
+HAVING COUNT(b.book_id) >= 10;
+
+--d) Identify members who have never borrowed a book.
+SELECT m.name AS Member_never_borrowed_a_Book FROM Member m
+LEFT JOIN BorrowingRecords AS b ON m.member_id = b.member_id
+WHERE b.member_id is NULL;
